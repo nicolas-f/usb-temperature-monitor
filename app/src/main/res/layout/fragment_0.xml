@@ -3,8 +3,9 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.plantmer.soilsensor.Fragment.MainFragment">
-    <android.support.design.widget.CoordinatorLayout
+    tools:context="fr.umrae.temperature_monitor.Fragment.MainFragment">
+
+    <androidx.coordinatorlayout.widget.CoordinatorLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
             <LinearLayout
@@ -185,5 +186,5 @@
                 </ScrollView>
 
             </LinearLayout>
-    </android.support.design.widget.CoordinatorLayout>
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
 </RelativeLayout>
