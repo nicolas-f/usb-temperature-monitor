@@ -151,18 +151,6 @@
 
 
                 </LinearLayout>
-                <LinearLayout
-                    android:layout_height="match_parent"
-                    android:layout_width="match_parent"
-                    android:orientation="horizontal">
-
-                    <com.google.android.gms.common.SignInButton
-                        android:id="@+id/sign_in_button"
-                        android:layout_width="wrap_content"
-                        android:layout_height="36dp"
-                        />
-                </LinearLayout>
-
                 <View
                     android:layout_width="match_parent"
                     android:layout_height="1dp"

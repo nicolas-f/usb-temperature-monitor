@@ -153,9 +153,6 @@ public class MainFragment extends Fragment implements View.OnClickListener{
 
                 main.getSerial().writeCmd("read");
                 break;
-            case R.id.sign_in_button:
-                main.signIn();
-                break;
         }
     }
     private void initializeTextView() {
@@ -206,9 +203,6 @@ public class MainFragment extends Fragment implements View.OnClickListener{
         mIconBatView.setText(mIconBat);
         mIconRssiView.setTypeface(weatherFontIcon);
         mIconRssiView.setText(mIconRssi);
-        signInButton = getActivity().findViewById(R.id.sign_in_button);
-        signInButton.setSize(SignInButton.SIZE_STANDARD);
-        signInButton.setOnClickListener(this);
         updateCurrentWeather();
         radiogroup = (RadioGroup) getActivity().findViewById(R.id.radiogroup);
         radiogroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener()
@@ -272,19 +266,6 @@ public class MainFragment extends Fragment implements View.OnClickListener{
             radiogroup.addView(newRadioButton, layoutParams);
         }
 
-    }
-
-    SignInButton signInButton;
-    public void setSignInEnabled(boolean enable){
-        if(!init){
-            return;
-        }
-
-        if(enable){
-            signInButton.setVisibility(View.VISIBLE);
-        }else{
-            signInButton.setVisibility(View.GONE);
-        }
     }
 
     private String mIconDp;

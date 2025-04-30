@@ -156,7 +156,7 @@ public class MainActivity extends AppCompatActivity implements Runnable {
     private SettingsFragment settingsFragment;
     private MenuItem prevMenuItem;
 
-    private Context httpContext=new Context("https://zerver.io/api/v1/");
+    private Context httpContext=new Context("https://umrae.fr/api/v1/");
 
     public Context getHttpContext() {
         return httpContext;
@@ -254,16 +254,6 @@ public class MainActivity extends AppCompatActivity implements Runnable {
         mainFragment.setDss(devs);
     }
 
-    private GoogleSignInClient signInClient;
-
-    public GoogleSignInClient getSignInClient() {
-        return signInClient;
-    }
-    int RC_SIGN_IN = 12345;
-    public void signIn() {
-        Intent signInIntent = signInClient.getSignInIntent();
-        startActivityForResult(signInIntent, RC_SIGN_IN);
-    }
     String TAG = "main";
 
     private void setupViewPager(ViewPager viewPager) {
