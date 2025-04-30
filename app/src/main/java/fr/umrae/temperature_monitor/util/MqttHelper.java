@@ -18,7 +18,7 @@ import static fr.umrae.temperature_monitor.MainActivity.DEV_TYPE_LW;
 public class MqttHelper {
     public MqttAndroidClient mqttAndroidClient;
 
-    final String serverUri = "tcp://zerver.io:1883";
+    final String serverUri = "tcp://umrae.fr:1883";
 
     final String clientId = "SoilSensor" + System.currentTimeMillis();
     final String subscriptionTopic = "ds/"+DEV_TYPE_LW+"/+/out/#";

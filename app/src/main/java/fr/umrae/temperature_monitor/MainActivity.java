@@ -5,20 +5,11 @@ import android.app.AlertDialog;
 import androidx.annotation.NonNull;
 import androidx.room.Room;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.os.Bundle;
 import android.os.StrictMode;
-import androidx.core.app.ActivityCompat;
 import android.util.Log;
 import android.view.MenuItem;
 
-import com.google.android.gms.auth.api.signin.GoogleSignIn;
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
-import com.google.android.gms.auth.api.signin.GoogleSignInClient;
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
-import com.google.android.gms.common.api.ApiException;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.gson.reflect.TypeToken;
 import androidx.appcompat.app.AppCompatActivity;
@@ -57,9 +48,6 @@ public class MainActivity extends AppCompatActivity implements Runnable {
     public static final String USB_DEV = "USB";
     private String currentDevice = USB_DEV;
     public static final String  DEV_TYPE_LW = "soilwcs3";
-    public static final String  DEV_TYPE_USB = "SWCS3USB";
-    public static final String serverUri = "tcp://zerver.io:1883";
-    MqttAndroidClient mqttAndroidClient;
     public String getCurrentDevice() {
         return currentDevice;
     }
@@ -73,7 +61,7 @@ public class MainActivity extends AppCompatActivity implements Runnable {
             Executors.newScheduledThreadPool(1);
 
     public void initLog(){
-        scheduler.scheduleAtFixedRate(this, 3, 5, SECONDS);
+        scheduler.scheduleWithFixedDelay(this, 3, 5, SECONDS);
     }
 
     @Override

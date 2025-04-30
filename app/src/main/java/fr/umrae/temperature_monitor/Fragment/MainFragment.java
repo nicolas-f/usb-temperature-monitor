@@ -14,8 +14,6 @@ import android.widget.RadioGroup;
 import android.widget.TextView;
 
 import androidx.fragment.app.Fragment;
-
-import com.google.android.gms.common.SignInButton;
 import fr.umrae.temperature_monitor.MainActivity;
 import fr.umrae.temperature_monitor.R;
 import fr.umrae.temperature_monitor.dao.DataObj;
