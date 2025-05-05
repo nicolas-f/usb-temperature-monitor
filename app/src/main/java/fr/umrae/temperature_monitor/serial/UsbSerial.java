@@ -14,7 +14,9 @@ import com.hoho.android.usbserial.driver.UsbSerialProber;
 
 import fr.umrae.temperature_monitor.MainActivity;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -22,6 +24,8 @@ import java.util.concurrent.Executors;
 
 public class UsbSerial implements Runnable {
     public static final String TAG = "Usb";
+
+    private static final int ROOT_USB_HUB = 0x1d6b;
 
     public UsbSerial(MainActivity handler) {
         this.handler = handler;
@@ -32,6 +36,8 @@ public class UsbSerial implements Runnable {
     protected UsbDevice device;
     protected UsbDeviceConnection connection;
     protected MainActivity handler;
+
+    public Protocol protocol;
 
     public static void getPermission(final UsbManager manager, Context context, UsbDevice device) {
         if (mPermissionIntent == null) {
@@ -56,13 +62,10 @@ public class UsbSerial implements Runnable {
             getPermission(manager, handler, usbDevice);
             if (!manager.hasPermission(usbDevice)) {
                 Log.d(TAG, "Doesn't have permission device: " + device.toString());
-                continue;
             } else {
                 device = usbDevice;
                 int deviceVID = device.getVendorId();
-                int devicePID = device.getProductId();
-
-                if (deviceVID != 0x1d6b && (devicePID != 0x0001 || devicePID != 0x0002 || devicePID != 0x0003)) {
+                if (deviceVID != ROOT_USB_HUB) {
                     // There is a device connected to our Android device. Try to
                     // open it as a Serial Port.
                     android.util.Log.i(TAG, "DEVICE OK" + device);
@@ -73,7 +76,6 @@ public class UsbSerial implements Runnable {
                     device = null;
                 }
             }
-
         }
         return false;
     }
@@ -99,7 +101,8 @@ public class UsbSerial implements Runnable {
         if(ports.size()==0){
             return false;
         }
-// Open a connection to the first available driver.
+
+        // Open a connection to the first available driver.
 
         mDriver = ports.get(0);
         int deviceVID = mDriver.getDriver().getDevice().getVendorId();
@@ -110,9 +113,8 @@ public class UsbSerial implements Runnable {
             if (mDriver == null) {
                 return false;
             }
-            mDriver.open(connection);
-            mDriver.setParameters(115200, 8, UsbSerialPort.STOPBITS_1, UsbSerialPort.PARITY_NONE);
-            mDriver.setDTR(true);
+            protocol = new Protocol(mDriver);
+            protocol.connect();
             android.util.Log.i(TAG, "conn on : " + 115200);
         } catch (IOException e) {
             android.util.Log.e(TAG, "Error setting up device: " + e.getMessage(), e);
@@ -125,30 +127,13 @@ public class UsbSerial implements Runnable {
             return false;
         }
         run = true;
-        mExecutor.submit(this);
-        try {
-            Thread.sleep(300);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        write("ver\r\n".getBytes());
-        try {
-            Thread.sleep(300);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
         return true;
     }
     public void close() {
         run = false;
-//        if (mDriver != null) {
-//            try {
-//                mDriver.close();
-//                mDriver = null;
-//            } catch (IOException e2) {
-//                // Ignore.
-//            }
-//        }
+        if(protocol != null) {
+            protocol.unplug();
+        }
         stop();
         handler.disconnected();
     }
@@ -191,13 +176,6 @@ public class UsbSerial implements Runnable {
     public void writeCmd(final String cmd) {
         String wr = cmd+"\r\n";
         write(wr.getBytes());
-//        handler.runOnUiThread(new Runnable() {
-//            @Override
-//            public void run() {
-//                handler.addLog(">"+cmd);
-//            }
-//        });
-
     }
 
     private enum State {
@@ -262,13 +240,7 @@ public class UsbSerial implements Runnable {
         }
     }
 
-    // volatile boolean reading = true;
     private byte[] rcv_bytes = new byte[BUFSIZ];
-    //private AtomicBoolean block = new AtomicBoolean(false);
-
-//    public AtomicBoolean getBlock() {
-//        return block;
-//    }
 
     private void step() throws IOException {
         // Handle incoming data.
@@ -305,12 +277,7 @@ public class UsbSerial implements Runnable {
             }
         }
         if (outBuff != null) {
-//            if (DEBUG) {
-//                android.util.Log.d(TAG, "Writing data len=" + len);
-//            }
             mDriver.write(outBuff, READ_WAIT_MILLIS);
         }
     }
-
-
 }
