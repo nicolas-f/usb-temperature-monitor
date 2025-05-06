@@ -33,8 +33,6 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 
 public class MainActivity extends AppCompatActivity implements Runnable {
 
-    public static final String TYPE_USB = "USB";
-    public static final String TYPE_LWA = "LWA";
     public static final String USB_DEV = "USB";
     private String currentDevice = USB_DEV;
     public static final String  DEV_TYPE_LW = "soilwcs3";
