@@ -45,37 +45,11 @@
     <string name="toast_parse_error">An error has occurred. Try later!</string>
 
     <!-- Weather icons -->
-    <string name="icon_clear_sky_day" translatable="false"></string>
-    <string name="icon_clear_sky_night" translatable="false"></string>
-    <string name="icon_few_clouds_day" translatable="false"></string>
-    <string name="icon_few_clouds_night" translatable="false"></string>
-    <string name="icon_scattered_clouds" translatable="false"></string>
-    <string name="icon_broken_clouds" translatable="false"></string>
-    <string name="icon_shower_rain" translatable="false"></string>
-    <string name="icon_rain_day" translatable="false"></string>
-    <string name="icon_rain_night" translatable="false"></string>
-    <string name="icon_thunderstorm" translatable="false"></string>
-    <string name="icon_snow" translatable="false"></string>
-    <string name="icon_mist" translatable="false"></string>
-    <string name="icon_weather_default" translatable="false"></string>
-    <string name="icon_wind" translatable="false"></string>
-    <string name="icon_humidity" translatable="false"></string>
-    <string name="icon_barometer" translatable="false"></string>
-    <string name="icon_cloudiness" translatable="false"></string>
-    <string name="icon_sunrise" translatable="false"></string>
-    <string name="icon_sunset" translatable="false"></string>
-
-    <string name="icon_dp" translatable="false"></string>
-    <string name="icon_temp" translatable="false"></string>
-    <string name="icon_ec" translatable="false"></string>
-    <string name="icon_vwc" translatable="false"></string>
-    <string name="icon_bat" translatable="false"></string>
-    <string name="icon_rssi" translatable="false"></string>
+    <string name="icon_temp" translatable="false">🌡</string>
 
     <!-- Units and Measurement-->
-    <string name="percent_sign" translatable="false">\u0025</string>
     <string name="volt_sign" translatable="false">v</string>
-    <string name="temperature_with_degree" translatable="false">%s\u00B0</string>
+    <string name="temperature_with_degree" translatable="false">%s ℃</string>
     <string name="pressure_measurement">hPa</string>
     <string name="wind_speed_meters">m/s</string>
     <string name="wind_speed_miles">mph</string>
@@ -85,12 +59,7 @@
     <string name="hint_activity_search">Search location</string>
 
 
-    <string name="vwc_label">Water content: %1$s%2$s</string>
     <string name="temp_label">Temperature: %1$s</string>
-    <string name="dp_label">Diel. permittivity: %1$s</string>
-    <string name="ec_label">El. Conductivity: %1$s</string>
-    <string name="bat_label">Battery: %1$s%2$s</string>
-    <string name="rssi_label">RSSI: %1$s</string>
 
     <!-- Weather conditions label strings -->
     <string name="wind_label">Wind: %1$s %2$s</string>
@@ -120,4 +89,6 @@
     <string name="default_daily_forecast" translatable="false">[{"cloudiness":"6","windSpeed":"1.5","description":"Clear","humidity":"45","icon":"10d","pressure":"1000","windDegree":"303","temperatureEvening":"14.63","dateTime":"1471673520","temperatureMin":"10.38","temperatureMorning":"15.9","temperatureNight":"10.38","temperatureDay":"15.9","temperatureMax":"16.52","rain":"2","snow":"5"}]</string>
     <!-- Dialog strings -->
     <string name="restart_dialog_message">Please restart application to apply new settings</string>
+    <string name="show_usb_logs">Show USB logs</string>
+    <string name="temperature">Temperature</string>
 </resources>

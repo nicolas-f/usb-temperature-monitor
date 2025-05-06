@@ -13,16 +13,14 @@ import com.hoho.android.usbserial.driver.UsbSerialPort;
 import com.hoho.android.usbserial.driver.UsbSerialProber;
 
 import fr.umrae.temperature_monitor.MainActivity;
+import fr.umrae.temperature_monitor.dao.DataObj;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.ByteBuffer;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
-public class UsbSerial implements Runnable {
+public class UsbSerial implements PropertyChangeListener {
     public static final String TAG = "Usb";
 
     private static final int ROOT_USB_HUB = 0x1d6b;
@@ -30,6 +28,7 @@ public class UsbSerial implements Runnable {
     public UsbSerial(MainActivity handler) {
         this.handler = handler;
     }
+
     private UsbSerialPort mDriver;
     private static PendingIntent mPermissionIntent = null;
     protected UsbManager manager;
@@ -38,6 +37,13 @@ public class UsbSerial implements Runnable {
     protected MainActivity handler;
 
     public Protocol protocol;
+
+    @Override
+    public void propertyChange(PropertyChangeEvent evt) {
+        if(evt.getPropertyName().equals("data")) {
+            handler.onNewData((DataObj) evt.getNewValue());
+        }
+    }
 
     public static void getPermission(final UsbManager manager, Context context, UsbDevice device) {
         if (mPermissionIntent == null) {
@@ -79,26 +85,27 @@ public class UsbSerial implements Runnable {
         }
         return false;
     }
-//I/Usb: DEVICE OKUsbDevice[mName=/dev/bus/usb/001/002,mVendorId=9025,mProductId=32845,mClass=239,mSubclass=2,mProtocol=1,mManufacturerName=Arduino LLC,mProductName=SoilSensor3RF,mVersion=2.0,mSerialNumber=579BBD9F514D4E544B202020FF051B0E,mConfigurations=[
-    public void connect() throws IOException{
+
+    public void connect() throws IOException {
         Log.e(TAG, "CONNECT!!!!!!!");
         findFirstDevice();
         open();
     }
+
     public boolean open() throws IOException {
-        Log.i(TAG,"open");
-// Find all available drivers from attached devices.
+        Log.i(TAG, "open");
+        // Find all available drivers from attached devices.
         if (manager == null) {
             manager = (UsbManager) handler.getSystemService(Context.USB_SERVICE);
         }
         List<UsbSerialDriver> drivers = UsbSerialProber.getDefaultProber().findAllDrivers(manager);
-        Log.i(TAG,"drivers:"+drivers.size());
-        if(drivers.size()==0){
+        Log.i(TAG, "drivers:" + drivers.size());
+        if (drivers.isEmpty()) {
             return false;
         }
         List<UsbSerialPort> ports = drivers.get(0).getPorts();
-        Log.i(TAG,"ports:"+ports.size());
-        if(ports.size()==0){
+        Log.i(TAG, "ports:" + ports.size());
+        if (ports.isEmpty()) {
             return false;
         }
 
@@ -108,12 +115,13 @@ public class UsbSerial implements Runnable {
         int deviceVID = mDriver.getDriver().getDevice().getVendorId();
         int devicePID = mDriver.getDriver().getDevice().getProductId();
         String deviceName = mDriver.getDriver().getDevice().getDeviceName();
-        Log.e(TAG,"deviceVID:"+deviceVID+" devicePID:"+devicePID+" deviceName:"+deviceName);
+        Log.e(TAG, "deviceVID:" + deviceVID + " devicePID:" + devicePID + " deviceName:" + deviceName);
         try {
             if (mDriver == null) {
                 return false;
             }
             protocol = new Protocol(mDriver);
+            protocol.addPropertyChangeListener(this);
             protocol.connect();
             android.util.Log.i(TAG, "conn on : " + 115200);
         } catch (IOException e) {
@@ -126,56 +134,14 @@ public class UsbSerial implements Runnable {
             mDriver = null;
             return false;
         }
-        run = true;
         return true;
     }
+
     public void close() {
-        run = false;
-        if(protocol != null) {
+        if (protocol != null) {
             protocol.unplug();
         }
         stop();
-        handler.disconnected();
-    }
-
-    public InputStream getIN() {
-        return inputBuf.getInputStream();
-    }
-
-    public OutputStream getOUT() {
-        return out;
-    }
-
-    private static final boolean DEBUG = true;
-
-    private static final int READ_WAIT_MILLIS = 20;
-    private static final int BUFSIZ = 1024;
-
-    CircularByteBuffer inputBuf = new CircularByteBuffer();
-
-    // Synchronized by 'mWriteBuffer'
-    private final ByteBuffer mWriteBuffer = ByteBuffer.allocate(BUFSIZ);
-
-    OutputStream out = new OutputStream() {
-
-        public void write(int b) throws IOException {
-            synchronized (mWriteBuffer) {
-                mWriteBuffer.put((byte) b);
-            }
-        }
-
-        public void write(byte[] bytes, int off, int len)
-                throws IOException {
-            synchronized (mWriteBuffer) {
-                mWriteBuffer.put(bytes, off, len);
-            }
-        }
-
-    };
-
-    public void writeCmd(final String cmd) {
-        String wr = cmd+"\r\n";
-        write(wr.getBytes());
     }
 
     private enum State {
@@ -184,13 +150,7 @@ public class UsbSerial implements Runnable {
         STOPPING
     }
 
-     private State mState = State.STOPPED;
-
-    public void write(byte[] data) {
-        synchronized (mWriteBuffer) {
-            mWriteBuffer.put(data);
-        }
-    }
+    private State mState = State.STOPPED;
 
     public synchronized void stop() {
         if (getState() == State.RUNNING) {
@@ -203,81 +163,4 @@ public class UsbSerial implements Runnable {
         return mState;
     }
 
-    private boolean run = true;
-    private final ExecutorService mExecutor = Executors.newSingleThreadExecutor();
-
-    /**
-     * Continuously services the read and write buffers until {@link #stop()} is
-     * called, or until a driver exception is raised.
-     */
-    @Override
-    public void run() {
-        synchronized (this) {
-            if (getState() != State.STOPPED) {
-                throw new IllegalStateException("Already running.");
-            }
-            mState = State.RUNNING;
-        }
-
-        android.util.Log.i(TAG, "Running ..");
-        try {
-            while (run) {
-                if (getState() != State.RUNNING) {
-                    android.util.Log.i(TAG, "Stopping mState=" + getState());
-                    break;
-                }
-                step();
-            }
-        } catch (Exception e) {
-            android.util.Log.w(TAG, "Run ending due to exception: " + e.getMessage(), e);
-        } finally {
-            synchronized (this) {
-                mState = State.STOPPED;
-                android.util.Log.i(TAG, "USB Stopped.");
-                close();
-                handler.disconnected();
-            }
-        }
-    }
-
-    private byte[] rcv_bytes = new byte[BUFSIZ];
-
-    private void step() throws IOException {
-        // Handle incoming data.
-        int len = mDriver.read(rcv_bytes, READ_WAIT_MILLIS);
-        if (len > 0) {
-            // if (DEBUG) android.util.Log.i(TAG, "Read data len=" + len);
-            String rec="";
-            for (int i = 0; i < len; i++) {
-                char c = (char)rcv_bytes[i];
-                if (DEBUG) rec += c;
-
-                inputBuf.getOutputStream().write(rcv_bytes[i]);
-                if(c=='\n' ){//&& !block.get()
-                    byte[] arr = new byte[getIN().available()];
-                    getIN().read(arr);
-                    String ret = new String(arr);
-                    handler.addLine(ret);
-                }
-
-            }
-            //if (DEBUG) android.util.Log.i(TAG, "rec=" + rec);
-
-        }
-
-        // Handle outgoing data.
-        byte[] outBuff = null;
-        synchronized (mWriteBuffer) {
-            if (mWriteBuffer.position() > 0) {
-                len = mWriteBuffer.position();
-                outBuff = new byte[len];
-                mWriteBuffer.rewind();
-                mWriteBuffer.get(outBuff, 0, len);
-                mWriteBuffer.clear();
-            }
-        }
-        if (outBuff != null) {
-            mDriver.write(outBuff, READ_WAIT_MILLIS);
-        }
-    }
 }

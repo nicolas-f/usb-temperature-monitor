@@ -2,30 +2,21 @@ package fr.umrae.temperature_monitor.Fragment;
 
 
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
-import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.fragment.app.Fragment;
 
-import com.google.gson.Gson;
 import fr.umrae.temperature_monitor.MainActivity;
 import fr.umrae.temperature_monitor.R;
-import fr.umrae.temperature_monitor.dao.DataSourceDTO;
-import fr.umrae.temperature_monitor.dao.MessageDAO;
-import fr.umrae.temperature_monitor.dao.TtnDeviceConfig;
-import fr.umrae.temperature_monitor.util.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Pattern;
 
 
 public class SettingsFragment extends Fragment implements View.OnClickListener {
@@ -36,164 +27,18 @@ public class SettingsFragment extends Fragment implements View.OnClickListener {
         this.main = main;
     }
 
-    public void append(String[] split){
-        if(!init){
-            return;
-        }
+    @Override
+    public void onClick(View v) {
 
-        if(split.length==7){
-            lwIntervalEt.setText(split[0]);
-            lwDevEuiEt.setText(split[1]);
-            lwAppEuiEt.setText(split[2]);
-            lwAppKeyEt.setText(split[3]);
-            lwNWKSKeyEt.setText(split[4]);
-            lwAPPSKeyEt.setText(split[5]);
-            lwDevAddrEt.setText(split[6]);
-        }else if(split[0].startsWith("infoUSB")){
-            usbIntervalEt.setText(String.valueOf(Long.valueOf(split[1])/1000));
-            usbOffTimeEt.setText(split[2]);
-            usbDevIdEt.setText(split[4]);
-//            calECEt.setText(split[1]);
-        }
     }
+
     public SettingsFragment() {
         // Required empty public constructor
     }
-    private Button rawButton;
-    private Button airButton;
-    private Button waterButton;
-    private Button usbIntervalButton;
-    private Button usbTimeButton;
-    private Button usbOffTimeButton;
-    private Button usbDevIdButton;
-    private Button usbInfoButton;
-    private Button calECButton;
-    private Button lwIntervalButton;
-    private Button lwInfoButton;
-    private Button lwGenButton;
-    private Button lwRegButton;
-    private Button lwDevEuiButton;
-    private Button lwAppEuiButton;
-    private Button lwAppKeyButton;
-    private Button lwDevAddrButton;
-    private Button lwNWKSKeyButton;
-    private Button lwAPPSKeyButton;
 
     private TextView cmdLog;
 
-    private EditText rawEt;
-//    private EditText airEt;
-//    private EditText waterEt;
-    private EditText usbIntervalEt;
-    private EditText usbOffTimeEt;
-    private EditText lwIntervalEt;
-    private EditText lwDevEuiEt;
-    private EditText usbDevIdEt;
-    private EditText calECEt;
-    private EditText lwAppEuiEt;
-    private EditText lwAppKeyEt;
-    private EditText lwDevAddrEt;
-    private EditText lwNWKSKeyEt;
-    private EditText lwAPPSKeyEt;
-    private EditText lwDevName;
-
     boolean init = false;
-    Gson gson = new Gson();
-
-    public final static String DATA_SOURCE_PATTERN = "^[a-zA-Z0-9_]+([-.][a-zA-Z0-9_]+)*$";
-    private static Pattern pattern = Pattern.compile(DATA_SOURCE_PATTERN);
-
-    @Override
-    public void onClick(View view)
-    {
-        //Log.d("settings", "onClick: "+view.getId());
-        if(!main.isConnected()){
-            main.alertNotConn();
-            return;
-        }
-        switch (view.getId()) {
-            case R.id.rawButton:
-                main.getSerial().writeCmd("raw "+rawEt.getText());
-                break;
-            case R.id.airButton:
-                main.getSerial().writeCmd("air");//+airEt.getText());
-                break;
-            case R.id.waterButton:
-                main.getSerial().writeCmd("water");//+waterEt.getText());
-                break;
-            case R.id.usbMillsButton:
-                main.getSerial().writeCmd("millis "+String.valueOf(Integer.parseInt(usbIntervalEt.getText().toString())*1000));
-                break;
-            case R.id.usbTimeButton:
-                main.getSerial().writeCmd("time "+((long)(System.currentTimeMillis()/1000)));
-                break;
-            case R.id.usbOffTimeButton:
-                main.getSerial().writeCmd("int "+usbOffTimeEt.getText());
-                break;
-            case R.id.calECButton:
-                main.getSerial().writeCmd("ec "+calECEt.getText());
-                break;
-            case R.id.usbInfoButton:
-                main.getSerial().writeCmd("info");
-                break;
-            case R.id.usbDevIdButton:
-                main.getSerial().writeCmd("devid "+usbDevIdEt.getText());
-                break;
-            case R.id.lwIntervalButton:
-                main.getSerial().writeCmd("int "+lwIntervalEt.getText());
-                break;
-            case R.id.lwInfoButton:
-                main.getSerial().writeCmd("csv");
-                break;
-            case R.id.lwRegButton:
-                if(main.getHttpContext().getToken()!=null){
-                    DataSourceDTO dto = new DataSourceDTO();
-                    dto.setType(main.DEV_TYPE_LW);
-                    if(lwDevName.getText()!=null && !"".equals(lwDevName.getText().toString())) {
-                        if(!pattern.matcher(lwDevName.getText().toString()).matches()){
-                            main.alertInvalidName();
-                            return;
-                        }
-                        dto.setName(lwDevName.getText().toString());
-                    }
-                    dto.setPin("0000");
-                    dto.setSubProto("TtnSubproc");
-                    dto.setSubProtoConf(gson.toJson(new TtnDeviceConfig(lwAppEuiEt.getText().toString(),lwDevEuiEt.getText().toString(),lwAppKeyEt.getText().toString())));
-                    MessageDAO msg = main.getHttpContext().doPostRequest("datasources",dto,MessageDAO.class);
-                    Log.i("SF","REG Fin:"+msg);
-                    if(msg!=null && "DS registered".equals(msg.getMessage())){
-                        main.reloadDev();
-                    }
-                }else{
-                    main.alertNotLogin();
-                }
-                break;
-            case R.id.lwGenButton:
-                lwDevEuiEt.setText(Utils.randomHex(8));
-                main.getSerial().writeCmd("deveui "+lwDevEuiEt.getText());
-                lwAppKeyEt.setText(Utils.randomHex(16));
-                main.getSerial().writeCmd("appeui "+lwAppKeyEt.getText());
-                break;
-            case R.id.lwDevEuiButton:
-                main.getSerial().writeCmd("deveui "+lwDevEuiEt.getText());
-                break;
-            case R.id.lwAppEuiButton:
-                main.getSerial().writeCmd("appeui "+lwAppEuiEt.getText());
-                break;
-            case R.id.lwAppKeyButton:
-                main.getSerial().writeCmd("key "+lwAppKeyEt.getText());
-                break;
-            case R.id.lwDevAddrButton:
-                main.getSerial().writeCmd("addr "+lwDevAddrEt.getText());
-                break;
-            case R.id.lwNWKSKeyButton:
-                main.getSerial().writeCmd("nwks "+lwNWKSKeyEt.getText());
-                break;
-            case R.id.lwAPPSKeyButton:
-                main.getSerial().writeCmd("apps "+lwAPPSKeyEt.getText());
-                break;
-        }
-    }
 
     public TextView getCmdLog() {
         return cmdLog;
@@ -227,75 +72,7 @@ public class SettingsFragment extends Fragment implements View.OnClickListener {
                 setLog(isChecked);
             }
         });
-        rawButton =  getActivity().findViewById(R.id.rawButton);
-        rawButton.setOnClickListener(this);
-        airButton =  getActivity().findViewById(R.id.airButton);
-        airButton.setOnClickListener(this);
-        waterButton =  getActivity().findViewById(R.id.waterButton);
-        waterButton.setOnClickListener(this);
-        usbIntervalButton =  getActivity().findViewById(R.id.usbMillsButton);
-        usbIntervalButton.setOnClickListener(this);
-        usbTimeButton =  getActivity().findViewById(R.id.usbTimeButton);
-        usbTimeButton.setOnClickListener(this);
-        usbOffTimeButton =  getActivity().findViewById(R.id.usbOffTimeButton);
-        usbOffTimeButton.setOnClickListener(this);
-        lwIntervalButton =  getActivity().findViewById(R.id.lwIntervalButton);
-        lwIntervalButton.setOnClickListener(this);
-        lwInfoButton =  getActivity().findViewById(R.id.lwInfoButton);
-        lwInfoButton.setOnClickListener(this);
-        lwGenButton =  getActivity().findViewById(R.id.lwGenButton);
-        lwGenButton.setOnClickListener(this);
-        lwRegButton =  getActivity().findViewById(R.id.lwRegButton);
-        lwRegButton.setOnClickListener(this);
-        lwDevEuiButton =  getActivity().findViewById(R.id.lwDevEuiButton);
-        lwDevEuiButton.setOnClickListener(this);
-        usbDevIdButton =  getActivity().findViewById(R.id.usbDevIdButton);
-        usbDevIdButton.setOnClickListener(this);
-        usbInfoButton =  getActivity().findViewById(R.id.usbInfoButton);
-        usbInfoButton.setOnClickListener(this);
-        calECButton =  getActivity().findViewById(R.id.calECButton);
-        calECButton.setOnClickListener(this);
-        lwAppEuiButton =  getActivity().findViewById(R.id.lwAppEuiButton);
-        lwAppEuiButton.setOnClickListener(this);
-        lwAppKeyButton =  getActivity().findViewById(R.id.lwAppKeyButton);
-        lwAppKeyButton.setOnClickListener(this);
-        lwDevAddrButton =  getActivity().findViewById(R.id.lwDevAddrButton);
-        lwDevAddrButton.setOnClickListener(this);
-        lwNWKSKeyButton =  getActivity().findViewById(R.id.lwNWKSKeyButton);
-        lwNWKSKeyButton.setOnClickListener(this);
-        lwAPPSKeyButton =  getActivity().findViewById(R.id.lwAPPSKeyButton);
-        lwAPPSKeyButton.setOnClickListener(this);
-
-        rawEt =  getActivity().findViewById(R.id.rawEt);
-//        airEt =  getActivity().findViewById(R.id.airEt);
-//        waterEt =  getActivity().findViewById(R.id.waterEt);
-        usbIntervalEt =  getActivity().findViewById(R.id.usbIntervalEt);
-        lwIntervalEt =  getActivity().findViewById(R.id.lwIntervalEt);
-        usbOffTimeEt =  getActivity().findViewById(R.id.usbOffTimeEt);
-        lwDevEuiEt =  getActivity().findViewById(R.id.lwDevEuiEt);
-        usbDevIdEt =  getActivity().findViewById(R.id.usbDevIdEt);
-        calECEt =  getActivity().findViewById(R.id.calECEt);
-        lwAppEuiEt =  getActivity().findViewById(R.id.lwAppEuiEt);
-        lwAppKeyEt =  getActivity().findViewById(R.id.lwAppKeyEt);
-        lwDevAddrEt =  getActivity().findViewById(R.id.lwDevAddrEt);
-        lwDevAddrEt =  getActivity().findViewById(R.id.lwDevAddrEt);
-        lwNWKSKeyEt =  getActivity().findViewById(R.id.lwNWKSKeyEt);
-        lwAPPSKeyEt =  getActivity().findViewById(R.id.lwAPPSKeyEt);
-        lwDevName =  getActivity().findViewById(R.id.lwDevName);
-        usb = getActivity().findViewById(R.id.llUSB);
-        lw = getActivity().findViewById(R.id.llLW);
-        llRaw = getActivity().findViewById(R.id.llRaw);
         init = true;
-        setRawEnabled(false);
-        setUsbEnabled(false);
-        setLwEnabled(false);
-        if(main.getType()!=null) {
-            if(main.getType().equals(main.TYPE_USB)){
-                setUsbEnabled(true);
-            }else if(main.getType().equals(main.TYPE_LWA)){
-                setLwEnabled(true);
-            }
-        }
         initLog();
         getCmdLog().setText("\n\n\n\n\n");
 
@@ -316,48 +93,11 @@ public class SettingsFragment extends Fragment implements View.OnClickListener {
         getCmdLog().setText(sb.toString());
     }
 
-    LinearLayout usb;
-    LinearLayout lw;
-    LinearLayout llRaw;
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_2, container, false);
-    }
-
-    public void setUsbEnabled(boolean enable){
-        if(!init){
-            return;
-        }
-
-        if(enable){
-            usb.setVisibility(View.VISIBLE);
-        }else{
-            usb.setVisibility(View.GONE);
-        }
-    }
-    public void setLwEnabled(boolean enable){
-        if(!init){
-            return;
-        }
-
-        if(enable){
-            lw.setVisibility(View.VISIBLE);
-        }else{
-            lw.setVisibility(View.GONE);
-        }
-    }
-    public void setRawEnabled(boolean enable){
-        if(!init){
-            return;
-        }
-
-        if(enable){
-            llRaw.setVisibility(View.VISIBLE);
-        }else{
-            llRaw.setVisibility(View.GONE);
-        }
     }
 
 }

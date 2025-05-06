@@ -5,9 +5,13 @@ import android.os.Looper;
 
 import androidx.annotation.NonNull;
 import eu.perpro.android.utmp_basic.Probe;
+import fr.umrae.temperature_monitor.dao.DataObj;
+
 import com.hoho.android.usbserial.driver.UsbSerialPort;
 import com.hoho.android.usbserial.util.SerialInputOutputManager;
 
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.io.IOException;
 
 public class Protocol implements SerialInputOutputManager.Listener {
@@ -19,6 +23,10 @@ public class Protocol implements SerialInputOutputManager.Listener {
 
     public DeviceStatus deviceStatus;
 
+    PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
+
+    DataObj previousData = new DataObj();
+
     Protocol() {
         mProbe = new Probe();
         Looper looper = Looper.myLooper();
@@ -28,6 +36,14 @@ public class Protocol implements SerialInputOutputManager.Listener {
 
         mProbeNewResolution = 0;
         updateData(DeviceStatus.None);
+    }
+
+    public void addPropertyChangeListener(PropertyChangeListener listener) {
+        propertyChangeSupport.addPropertyChangeListener(listener);
+    }
+
+    public void removePropertyChangeListener(PropertyChangeListener listener) {
+        propertyChangeSupport.removePropertyChangeListener(listener);
     }
 
     Protocol(UsbSerialPort usbSerialPort) {
@@ -108,7 +124,9 @@ public class Protocol implements SerialInputOutputManager.Listener {
     }
 
     private void sendDataUpstream() {
-    //mListener.onData(mProbe);
+        DataObj data = new DataObj(mUsbSerialPort.getDevice().getDeviceName(), mProbe.getTaken().getTime(), mProbe.getTemperature());
+        propertyChangeSupport.firePropertyChange("data", previousData, data);
+        previousData = data;
     }
 
     private void sendDataDownstream(boolean valid) {

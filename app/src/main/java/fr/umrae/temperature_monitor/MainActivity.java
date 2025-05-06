@@ -4,37 +4,27 @@ import android.app.AlertDialog;
 
 import androidx.annotation.NonNull;
 import androidx.room.Room;
-import android.content.DialogInterface;
+
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.util.Log;
 import android.view.MenuItem;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.google.gson.reflect.TypeToken;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.viewpager.widget.ViewPager;
 
 import fr.umrae.temperature_monitor.Fragment.MainFragment;
 import fr.umrae.temperature_monitor.Fragment.GraphFragment;
 import fr.umrae.temperature_monitor.Fragment.SettingsFragment;
-import fr.umrae.temperature_monitor.dao.BootConfDAO;
+import fr.umrae.temperature_monitor.dao.DataDao;
 import fr.umrae.temperature_monitor.dao.DataObj;
-import fr.umrae.temperature_monitor.dao.DataSourceDTO;
 import fr.umrae.temperature_monitor.serial.UsbSerial;
 import fr.umrae.temperature_monitor.dao.AppDatabase;
-import fr.umrae.temperature_monitor.util.MqttHelper;
 import fr.umrae.temperature_monitor.util.http.Context;
 
-import org.eclipse.paho.android.service.MqttAndroidClient;
-import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
-import org.eclipse.paho.client.mqttv3.MqttCallbackExtended;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
-
 import java.io.IOException;
-import java.lang.reflect.Type;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -87,45 +77,16 @@ public class MainActivity extends AppCompatActivity implements Runnable {
 
     private String type=null;
 
-    public void addLine(final String log){
-        if(log!=null){
+    public void onNewData(DataObj data){
+        if(data!=null){
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     try {
-                        //Log.i("main", "in:::" + log );
-                        addLog(log);
-                        String line;
-                        if (log.startsWith(">")) {
-                            line = log.substring(1,log.length());
-                        }else{
-                            line = log;
-                        }
-                        if (!connected.get() && line.length()>3) {
-                            Log.i("main", "line:" + line );
-                            type = line.substring(0, 3);;
-                            if(type.equalsIgnoreCase(TYPE_USB)){
-                                settingsFragment.setUsbEnabled(true);
-                                settingsFragment.setLwEnabled(false);
-                            }else if(type.equalsIgnoreCase(TYPE_LWA)){
-                                settingsFragment.setUsbEnabled(false);
-                                settingsFragment.setLwEnabled(true);
-                            }else{
-                                type = null;
-                            }
-                            if(type!=null) {
-                                //android.util.Log.e("main", "DETECTED : " + type);
-                                connected.compareAndSet(false,true);
-                                mainFragment.setConnected(connected.get());
-                            }
-                        } else {
-                            String[] split = line.split(",");
-                            if (split.length > 2) {
-                                mainFragment.append(split);
-                                graphFragment.append(split);
-                                settingsFragment.append(split);
-                            }
-                        }
+                        addLog(data.toString());
+                        mainFragment.append(data);
+                        graphFragment.append(data);
+                        scheduler.execute(new InsertDataInDb(data, getDb().dataDao()));
                     }catch (Exception ex){
                         Log.e("main","addLine",ex);
                     }
@@ -216,15 +177,22 @@ public class MainActivity extends AppCompatActivity implements Runnable {
 
             }
         });
-        if (android.os.Build.VERSION.SDK_INT > 9)
-        {
-            StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
-            StrictMode.setThreadPolicy(policy);
-        }
+        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+        StrictMode.setThreadPolicy(policy);
         setupViewPager(viewPager);
         init = true;
         initLog();
-        startMqtt();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        serial.close();
     }
 
     public void setCurrentDevice(String currentDevice) {
@@ -234,15 +202,6 @@ public class MainActivity extends AppCompatActivity implements Runnable {
         this.currentDevice = currentDevice;
 
     }
-    BootConfDAO conf = null;
-
-    public void reloadDev() {
-        Type listType = new TypeToken<ArrayList<DataSourceDTO>>(){}.getType();
-        ArrayList<DataSourceDTO> devs = httpContext.doGetRequest("datasources",listType);
-        mainFragment.setDss(devs);
-    }
-
-    String TAG = "main";
 
     private void setupViewPager(ViewPager viewPager) {
         ViewPagerAdapter adapter = new ViewPagerAdapter(getSupportFragmentManager());
@@ -268,110 +227,27 @@ public class MainActivity extends AppCompatActivity implements Runnable {
         alertDialog.setTitle("Alert");
         alertDialog.setMessage("Device not connected");
         alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK",
-                new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.dismiss();
-                    }
-                });
+                (dialog, which) -> dialog.dismiss());
         alertDialog.show();
 
     }
-    public void alertInvalidName(){
-        AlertDialog alertDialog = new AlertDialog.Builder(this).create();
-        alertDialog.setTitle("Alert");
-        alertDialog.setMessage("Device name not valid");
-        alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK",
-                new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.dismiss();
-                    }
-                });
-        alertDialog.show();
 
-    }
-    public void alertNotLogin(){
-        AlertDialog alertDialog = new AlertDialog.Builder(this).create();
-        alertDialog.setTitle("Alert");
-        alertDialog.setMessage("Not logged in");
-        alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK",
-                new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.dismiss();
-                    }
-                });
-        alertDialog.show();
-
-    }
     public String getType() {
         return type;
     }
 
+    private static class InsertDataInDb implements Runnable {
+        DataObj dob;
+        DataDao dataDao;
 
-    public void disconnected() {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                Log.i("main","!!!!!!!DISCONNECTED!!!!!!!!!!!!");
-                connected.compareAndSet(true,false);
-                mainFragment.setConnected(connected.get());
-                type = null;
-
-            }
-        });
-    }
-    MqttHelper mqttHelper;
-    private void startMqtt(){
-        mqttHelper = new MqttHelper(getApplicationContext());
-        mqttHelper.setCallback(new MqttCallbackExtended() {
-            @Override
-            public void connectComplete(boolean b, String s) {
-                Log.w("Mqtt", "connectComplete ");
-
-            }
-
-            @Override
-            public void connectionLost(Throwable throwable) {
-                Log.e("Mqtt", "conn lost ",throwable);
-
-            }
-
-            @Override
-            public void messageArrived(String topic, MqttMessage message) throws Exception {
-//                Log.i("Mqtt",topic + "Incoming message1: " + new String(message.getPayload()));
-                String[] tok = topic.split("/");
-                if(tok[1].equals(DEV_TYPE_LW)){
-                    byte cmd = Byte.valueOf(tok[4]);
-                    if(cmd==7){
-                        ByteBuffer buf=ByteBuffer.wrap(message.getPayload());
-                        try{//DataObj(String devId, long dateTime, float dp, float ec, float temp, float vwc, int rssi)
-                            DataObj dop = new DataObj(tok[2], System.currentTimeMillis(), buf.getShort()/100, buf.getShort()/100, buf.getShort()/100, buf.getShort(), buf.get(),buf.getShort());
-                            graphFragment.updatez(dop);
-                            if(currentDevice!=null && tok[2].equals(currentDevice)) {
-                                mainFragment.append(dop);
-                            }
-                        } catch (Exception exe){
-                            Log.e(TAG,"Message Parse failed: "  +toStr(message.getPayload()),exe);
-
-                        }
-
-                    }
-                }
-            }
-
-            @Override
-            public void deliveryComplete(IMqttDeliveryToken iMqttDeliveryToken) {
-
-            }
-        });
-    }
-    static String separator = ",";
-    public String  toStr(byte[] l) {
-        StringBuilder sb = new StringBuilder("(");
-        String sep = "";
-        for (byte object : l) {
-            sb.append(sep).append(object & 0xFF);
-            sep = separator;
+        public InsertDataInDb(DataObj dob, DataDao dataDao) {
+            this.dob = dob;
+            this.dataDao = dataDao;
         }
-        return sb.append(")").toString();
+
+        @Override
+        public void run() {
+            dataDao.insertAll(dob);
+        }
     }
 }

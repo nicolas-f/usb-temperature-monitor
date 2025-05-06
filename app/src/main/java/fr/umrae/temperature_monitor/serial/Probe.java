@@ -1,6 +1,10 @@
 package eu.perpro.android.utmp_basic;
 
+import android.util.Log;
+
 import androidx.annotation.NonNull;
+
+import com.hoho.android.usbserial.util.HexDump;
 
 import java.nio.ByteBuffer;
 import java.util.Date;
@@ -84,8 +88,8 @@ public class Probe extends ProbeMemory {
     }
 
     public void parseROM(byte[] payload) {
-        mROM = eu.perpro.android.util.HexDump.toHexString(payload);
-        // Log.i(mTAG, String.format("device rom: %s", mROM));
+        mROM = HexDump.toHexString(payload);
+        Log.i(mTAG, String.format("device rom: %s", mROM));
     }
 
     public boolean parseScratchpad(byte[] payload) {
@@ -96,7 +100,7 @@ public class Probe extends ProbeMemory {
         mTemperature = (float)s / 16;
         setMemory(payload);
         updatePendingMemoryStatus();
-        // Log.i(mTAG, String.format("temperature %.03f, resolution %d", mTemperature, mResolution));
+        Log.i(mTAG, String.format("temperature %.03f, resolution %d", mTemperature, mResolution));
         return true;
     }
 

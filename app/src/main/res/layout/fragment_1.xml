@@ -32,6 +32,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal">
+
                 <Button
                     android:id="@+id/genPrev"
                     android:layout_width="52dp"
@@ -73,31 +74,6 @@
                             android:orientation="vertical">
 
                             <TextView
-                                android:id="@+id/graphs.vwc_label"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:textAlignment="center"
-                                android:textColor="?android:attr/textColorPrimary"
-                                android:textSize="18sp" />
-
-                            <com.github.mikephil.charting.charts.LineChart
-                                android:id="@+id/vwc_chart"
-                                android:layout_width="match_parent"
-                                android:layout_height="220dp"></com.github.mikephil.charting.charts.LineChart>
-                        </LinearLayout>
-                    </androidx.cardview.widget.CardView>
-
-                    <androidx.cardview.widget.CardView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_margin="16dp">
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:orientation="vertical">
-
-                            <TextView
                                 android:id="@+id/graphs.temp_label"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
@@ -108,58 +84,7 @@
                             <com.github.mikephil.charting.charts.LineChart
                                 android:id="@+id/temp_chart"
                                 android:layout_width="match_parent"
-                                android:layout_height="220dp"></com.github.mikephil.charting.charts.LineChart>
-                        </LinearLayout>
-                    </androidx.cardview.widget.CardView>
-
-                    <androidx.cardview.widget.CardView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_margin="16dp">
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:orientation="vertical">
-
-                            <TextView
-                                android:id="@+id/graphs.dp_label"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:textAlignment="center"
-                                android:textColor="?android:attr/textColorPrimary"
-                                android:textSize="18sp" />
-
-                            <com.github.mikephil.charting.charts.LineChart
-                                android:id="@+id/dp_chart"
-                                android:layout_width="match_parent"
-                                android:layout_height="220dp"></com.github.mikephil.charting.charts.LineChart>
-                        </LinearLayout>
-                    </androidx.cardview.widget.CardView>
-
-                    <androidx.cardview.widget.CardView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_margin="16dp">
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:orientation="vertical">
-
-                            <TextView
-                                android:id="@+id/graphs.ec_label"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:textAlignment="center"
-                                android:textColor="?android:attr/textColorPrimary"
-                                android:textSize="18sp" />
-
-                            <com.github.mikephil.charting.charts.LineChart
-                                android:id="@+id/ec_chart"
-                                android:layout_width="match_parent"
-                                android:layout_height="220dp">
-                            </com.github.mikephil.charting.charts.LineChart>
+                                android:layout_height="220dp" />
                         </LinearLayout>
                     </androidx.cardview.widget.CardView>
                 </LinearLayout>
